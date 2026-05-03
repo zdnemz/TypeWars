@@ -37,19 +37,18 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   },
   events: {
     async createUser({ user }) {
-      // Generate a unique username on first login
+      if (!user.id) return  // safety guard
+
       const baseUsername = (user.name ?? user.email ?? "user")
         .toLowerCase()
         .replace(/[^a-z0-9]/g, "")
         .slice(0, 16)
 
-      let username = baseUsername
+      let username = baseUsername || "user"  // fallback if result is empty string
       let attempt = 0
 
       while (true) {
-        const existing = await prisma.user.findUnique({
-          where: { username },
-        })
+        const existing = await prisma.user.findUnique({ where: { username } })
         if (!existing) break
         attempt++
         username = `${baseUsername}${attempt}`

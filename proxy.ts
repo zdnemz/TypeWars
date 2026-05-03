@@ -5,7 +5,7 @@ import type { NextRequest } from "next/server"
 const PUBLIC_ROUTES = ["/", "/login", "/leaderboard"]
 const PUBLIC_ROUTE_PREFIXES = ["/profile/", "/api/auth"]
 
-export function middleware(req: NextRequest) {
+export function proxy(req: NextRequest) {
   const { nextUrl } = req
   const pathname = nextUrl.pathname
 

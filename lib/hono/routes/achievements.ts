@@ -2,10 +2,14 @@ import { Hono } from "hono"
 import { prisma } from "@/lib/prisma/client"
 import { createAuthMiddleware, type HonoEnv } from "@/lib/hono/middleware/auth"
 import { ACHIEVEMENTS, type AchievementKey } from "@/lib/types/game"
+import type { Achievement, UserAchievement } from "@prisma/client"
 
 const auth = createAuthMiddleware()
 
-// Seed achievements into DB on first run
+type UserAchievementWithAchievement = UserAchievement & {
+  achievement: Achievement
+}
+
 async function ensureAchievementsSeeded() {
   for (const [key, data] of Object.entries(ACHIEVEMENTS)) {
     await prisma.achievement.upsert({
@@ -16,8 +20,7 @@ async function ensureAchievementsSeeded() {
   }
 }
 
-// Check and award achievements for a user after a game
-async function checkAndAward(userId: string) {
+async function checkAndAward(userId: string): Promise<AchievementKey[]> {
   await ensureAchievementsSeeded()
 
   const [stats, allGames, existingAchievements] = await Promise.all([
@@ -29,15 +32,19 @@ async function checkAndAward(userId: string) {
     }),
   ])
 
-  const earned = new Set(existingAchievements.map((a) => a.achievement.key))
+  const earned = new Set(
+    (existingAchievements as UserAchievementWithAchievement[]).map(
+      (a: UserAchievementWithAchievement) => a.achievement.key
+    )
+  )
   const newKeys: AchievementKey[] = []
 
   const bestWpm = stats?.bestWpm ?? 0
   const totalGames = stats?.totalGames ?? 0
   const totalWins = stats?.totalWins ?? 0
-  const multiplayerGames = allGames.filter((g) => g.roomCode).length
+  const multiplayerGames = allGames.filter((g) => g.roomCode !== null).length
   const multiplayerWins = allGames.filter(
-    (g) => g.roomCode && g.placement === 1
+    (g) => g.roomCode !== null && g.placement === 1
   ).length
   const hasPerfectAccuracy = allGames.some(
     (g) => g.accuracy >= 100 && g.mode === "race"
@@ -67,7 +74,7 @@ async function checkAndAward(userId: string) {
       where: { key: { in: newKeys } },
     })
     await prisma.userAchievement.createMany({
-      data: achievements.map((a) => ({
+      data: achievements.map((a: Achievement) => ({
         userId,
         achievementId: a.id,
       })),
@@ -79,7 +86,6 @@ async function checkAndAward(userId: string) {
 }
 
 export const achievementsRouter = new Hono<HonoEnv>()
-  // GET /api/achievements — all available achievements
   .get("/", async (c) => {
     await ensureAchievementsSeeded()
     const achievements = await prisma.achievement.findMany({
@@ -87,7 +93,6 @@ export const achievementsRouter = new Hono<HonoEnv>()
     })
     return c.json({ achievements })
   })
-  // GET /api/achievements/me — current user's earned achievements
   .get("/me", auth, async (c) => {
     const userId = c.get("userId")
     const userAchievements = await prisma.userAchievement.findMany({
@@ -97,7 +102,6 @@ export const achievementsRouter = new Hono<HonoEnv>()
     })
     return c.json({ achievements: userAchievements })
   })
-  // POST /api/achievements/check — evaluate and award after a game
   .post("/check", auth, async (c) => {
     const userId = c.get("userId")
     const newKeys = await checkAndAward(userId)
