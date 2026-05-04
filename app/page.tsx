@@ -146,7 +146,7 @@ export default async function HomePage() {
 
         <footer className="border-t border-snow-faint/10 py-6 text-center">
           <p className="text-snow-faint text-xs font-semibold">
-            © 2026 TypeWars · Built with Next.js, Hono &amp; PartyKit
+            © 2026 TypingWars · Built with Next.js, Hono &amp; PartyKit
           </p>
         </footer>
       </main>

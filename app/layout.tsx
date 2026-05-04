@@ -4,11 +4,11 @@ import './globals.css'
 import { Providers } from './providers'
 
 export const metadata: Metadata = {
-  title: 'TypeWars — Real-Time Multiplayer Typing Battles',
+  title: 'TypingWars — Real-Time Multiplayer Typing Battles',
   description: 'Race against friends in real-time typing battles. Improve your WPM, climb the leaderboard, and earn achievements.',
   keywords: ['typing game', 'multiplayer typing', 'typing race', 'WPM', 'typing battle'],
   openGraph: {
-    title: 'TypeWars',
+    title: 'TypingWars',
     description: 'Real-time multiplayer typing battles',
     type: 'website',
   },
