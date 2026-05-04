@@ -4,18 +4,14 @@ import Link from 'next/link'
 
 const TEXTS = [
   "The quick brown fox jumps over the lazy dog. Pack my box with five dozen liquor jugs.",
-  "Programming is the art of telling another human what one wants the computer to do. Code is like humor.",
+  "Programming is the art of telling another human what one wants the computer to do. Code is like humor — when you have to explain it, it's bad.",
   "First, solve the problem. Then, write the code. Simplicity is the soul of efficiency.",
   "A good programmer is someone who always looks both ways before crossing a one-way street.",
   "In theory there is no difference between theory and practice. In practice there is.",
 ]
 
-function getRandomText() {
-  return TEXTS[Math.floor(Math.random() * TEXTS.length)]
-}
-
 export default function SoloPage() {
-  const [text] = useState(getRandomText)
+  const [text] = useState(() => TEXTS[Math.floor(Math.random() * TEXTS.length)])
   const [currentIndex, setCurrentIndex] = useState(0)
   const [errors, setErrors] = useState(0)
   const [wpm, setWpm] = useState(0)
@@ -25,98 +21,102 @@ export default function SoloPage() {
   const [saved, setSaved] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
 
-  useEffect(() => {
-    inputRef.current?.focus()
-  }, [])
+  useEffect(() => { inputRef.current?.focus() }, [])
 
-  function handleKeyDown(e: React.KeyboardEvent) {
+  async function handleKeyDown(e: React.KeyboardEvent) {
     if (finished) return
     if (e.key === 'Backspace') { if (currentIndex > 0) setCurrentIndex(i => i - 1); return }
     if (e.key.length !== 1) return
 
-    if (!startedAt) setStartedAt(Date.now())
+    const now = Date.now()
+    const sa = startedAt ?? now
+    if (!startedAt) setStartedAt(now)
 
     const expected = text[currentIndex]
     if (e.key !== expected) setErrors(n => n + 1)
-
     const newIndex = currentIndex + 1
     setCurrentIndex(newIndex)
 
-    const elapsed = startedAt ? (Date.now() - startedAt) / 60000 : 0.001
-    const newWpm = Math.round((newIndex / 5) / elapsed)
-    const newAccuracy = Math.round(((newIndex - errors) / newIndex) * 100)
-    setWpm(newWpm)
-    setAccuracy(newAccuracy)
+    const elapsed = (now - sa) / 60000
+    const newWpm = Math.round((newIndex / 5) / Math.max(elapsed, 0.001))
+    const newAcc = Math.round(((newIndex - errors) / newIndex) * 100)
+    setWpm(newWpm); setAccuracy(newAcc)
 
     if (newIndex >= text.length) {
       setFinished(true)
-      saveSoloResult(newWpm, newAccuracy)
+      await fetch('/api/results', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mode: 'solo', wpm: newWpm, accuracy: newAcc }),
+      })
+      await fetch('/api/achievements/check', { method: 'POST' })
+      setSaved(true)
     }
   }
-
-  async function saveSoloResult(w: number, a: number) {
-    await fetch('/api/results', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ mode: 'race', wpm: w, accuracy: a }),
-    })
-    await fetch('/api/achievements/check', { method: 'POST' })
-    setSaved(true)
-  }
-
-  const progress = Math.round((currentIndex / text.length) * 100)
 
   return (
     <>
       <nav className="nav">
-        <div className="nav__inner">
-          <Link href="/lobby" className="nav__logo">⌨️ Type<span>Battle</span></Link>
-          <span className="badge badge--accent">⚡ Solo Race</span>
+        <div className="nav-inner">
+          <Link href="/lobby" className="nav-logo">⌨️ Type<span>Wars</span></Link>
+          <span className="badge-yellow">⚡ Solo Race</span>
         </div>
       </nav>
 
-      <main style={{ maxWidth: '760px', margin: '0 auto', padding: '3rem 1.5rem' }}>
+      <main className="max-w-2xl mx-auto px-4 py-8">
         {!finished ? (
-          <>
-            <div className="flex gap-4" style={{ marginBottom: '2rem' }}>
-              <div className="stat-card" style={{ flex: 1 }}>
-                <div className="wpm-display">{wpm}<span className="wpm-display__unit"> wpm</span></div>
-                <div className="stat-card__label">Speed</div>
+          <div className="flex flex-col gap-5">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="stat-card"><div className="stat-number">{wpm}</div><div className="stat-label">WPM</div></div>
+              <div className="stat-card"><div className="stat-number" style={{ fontSize: '1.5rem' }}>{accuracy}%</div><div className="stat-label">Accuracy</div></div>
+            </div>
+
+            <div>
+              <div className="flex justify-between text-xs mb-2">
+                <span className="font-bold text-orange">Progress</span>
+                <span className="font-mono text-snow-muted">{Math.round((currentIndex / text.length) * 100)}%</span>
               </div>
-              <div className="stat-card" style={{ flex: 1 }}>
-                <div className="wpm-display" style={{ fontSize: '2rem' }}>{accuracy}<span className="wpm-display__unit">%</span></div>
-                <div className="stat-card__label">Accuracy</div>
+              <div className="progress-track">
+                <div className="progress-fill" style={{ width: `${(currentIndex / text.length) * 100}%` }} />
               </div>
             </div>
 
-            <div className="typing-area" style={{ marginBottom: '1.5rem' }} onClick={() => inputRef.current?.focus()}>
+            <div className="typing-area" onClick={() => inputRef.current?.focus()}>
               {text.split('').map((ch, i) => {
-                let cls = 'typing-char'
-                if (i < currentIndex) cls += ' typing-char--correct'
-                else if (i === currentIndex) cls += ' typing-char--current'
+                let cls = 'char'
+                if (i < currentIndex) cls = 'char-correct'
+                else if (i === currentIndex) cls = 'char-current'
                 return <span key={i} className={cls}>{ch}</span>
               })}
-              <input ref={inputRef} onKeyDown={handleKeyDown} readOnly
-                style={{ position: 'absolute', opacity: 0, width: 1, height: 1 }} aria-label="Type here" />
+              <input
+                ref={inputRef}
+                style={{ position: 'absolute', opacity: 0, width: 1, height: 1 }}
+                onKeyDown={handleKeyDown}
+                readOnly tabIndex={0}
+                aria-label="Typing input"
+              />
             </div>
 
-            <div className="progress-bar" style={{ height: '8px' }}>
-              <div className="progress-bar__fill progress-bar__fill--green" style={{ width: `${progress}%` }} />
-            </div>
-            <p style={{ marginTop: '0.5rem', fontSize: '0.8rem', color: 'var(--text-muted)' }}>{progress}% complete</p>
-          </>
+            <p className="text-center text-snow-faint text-xs font-semibold">
+              {!startedAt ? '⌨️ Start typing to begin…' : 'Keep going! 🔥'}
+            </p>
+          </div>
         ) : (
-          <div className="animate-fade-in" style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>🏁</div>
-            <h1 style={{ marginBottom: '0.5rem' }}>Race Complete!</h1>
-            {saved && <p style={{ marginBottom: '2rem', color: 'var(--accent-green)' }}>✓ Stats saved to your profile</p>}
-            <div className="grid-2" style={{ maxWidth: '400px', margin: '0 auto 2rem' }}>
-              <div className="stat-card"><div className="wpm-display">{wpm}</div><div className="stat-card__label">WPM</div></div>
-              <div className="stat-card"><div className="wpm-display" style={{ fontSize: '2rem' }}>{accuracy}%</div><div className="stat-card__label">Accuracy</div></div>
+          <div className="flex flex-col items-center gap-6 text-center max-w-sm mx-auto">
+            <div className="text-6xl" style={{ animation: 'float 1.5s ease-in-out infinite' }}>🏁</div>
+            <div>
+              <h1 className="font-display text-3xl font-bold text-snow mb-1">Finished!</h1>
+              {saved && <p className="text-game-lime text-sm font-semibold">✓ Stats saved</p>}
             </div>
-            <div className="flex gap-3 justify-center">
-              <button className="btn btn--primary" onClick={() => window.location.reload()}>Try Again</button>
-              <Link href="/lobby" className="btn btn--secondary">Back to Lobby</Link>
+            <div className="grid grid-cols-2 gap-3 w-full">
+              <div className="stat-card"><div className="stat-number">{wpm}</div><div className="stat-label">WPM</div></div>
+              <div className="stat-card"><div className="stat-number" style={{ fontSize: '1.5rem' }}>{accuracy}%</div><div className="stat-label">Accuracy</div></div>
+              <div className="stat-card"><div className="stat-number text-game-pink" style={{ fontSize: '1.5rem' }}>{errors}</div><div className="stat-label">Errors</div></div>
+              <div className="stat-card"><div className="stat-number text-game-lime" style={{ fontSize: '1.5rem' }}>{text.length}</div><div className="stat-label">Chars</div></div>
+            </div>
+            <div className="flex gap-3">
+              <button className="btn-primary" onClick={() => window.location.reload()}>Play Again 🔄</button>
+              <Link href="/lobby" className="btn-secondary">Lobby</Link>
             </div>
           </div>
         )}

@@ -14,13 +14,17 @@
     "@prisma/adapter-pg": "^7.8.0",
     "@prisma/client": "^7.8.0",
     "@types/pg": "^8.20.0",
+    "autoprefixer": "^10.5.0",
     "hono": "^4.12.16",
+    "motion": "^12.38.0",
     "next": "^16.2.4",
     "next-auth": "^5.0.0-beta.31",
     "partysocket": "^1.1.18",
     "pg": "^8.20.0",
+    "postcss": "^8.5.13",
     "react": "19.1.0",
     "react-dom": "19.1.0",
+    "tailwindcss": "^3.4.19",
     "zod": "^4.4.2"
   },
   "devDependencies": {

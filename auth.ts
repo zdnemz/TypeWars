@@ -21,6 +21,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   },
   callbacks: {
     async jwt({ token, user }) {
+      console.log(user);
+
+      console.log(token);
       if (user) {
         token.id = user.id
         token.username = (user as { username?: string }).username
@@ -28,7 +31,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       return token
     },
     async session({ session, token }) {
-      if (token) {
+      if (token) {        
         session.user.id = token.id as string
         session.user.username = token.username as string
       }

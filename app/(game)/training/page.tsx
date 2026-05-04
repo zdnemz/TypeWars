@@ -3,15 +3,16 @@ import { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
 
 const TEXTS = [
-  "The quick brown fox jumps over the lazy dog. Pack my box with five dozen liquor jugs.",
+  "The quick brown fox jumps over the lazy dog.",
   "Programming is the art of telling another human what one wants the computer to do.",
   "First, solve the problem. Then, write the code. Simplicity is the soul of efficiency.",
-  "A good programmer always looks both ways before crossing a one-way street. Clean code reads like prose.",
+  "A good programmer is someone who always looks both ways before crossing a one-way street.",
   "Walking on water and developing software from a specification are easy if both are frozen.",
 ]
 
 export default function TrainingPage() {
-  const [text] = useState(() => TEXTS[Math.floor(Math.random() * TEXTS.length)])
+  const [textIdx, setTextIdx] = useState(0)
+  const text = TEXTS[textIdx]
   const [currentIndex, setCurrentIndex] = useState(0)
   const [errors, setErrors] = useState(0)
   const [wpm, setWpm] = useState(0)
@@ -19,77 +20,83 @@ export default function TrainingPage() {
   const [finished, setFinished] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
 
-  useEffect(() => { inputRef.current?.focus() }, [])
+  useEffect(() => { inputRef.current?.focus() }, [textIdx])
 
   function handleKeyDown(e: React.KeyboardEvent) {
     if (finished) return
     if (e.key === 'Backspace') { if (currentIndex > 0) setCurrentIndex(i => i - 1); return }
     if (e.key.length !== 1) return
-    if (!startedAt) setStartedAt(Date.now())
 
+    const now = Date.now()
+    const sa = startedAt ?? now
+    if (!startedAt) setStartedAt(now)
+
+    const expected = text[currentIndex]
+    if (e.key !== expected) setErrors(n => n + 1)
     const newIndex = currentIndex + 1
-    if (e.key !== text[currentIndex]) setErrors(n => n + 1)
     setCurrentIndex(newIndex)
 
-    const elapsed = startedAt ? (Date.now() - startedAt) / 60000 : 0.001
-    setWpm(Math.round((newIndex / 5) / elapsed))
+    const elapsed = (now - sa) / 60000
+    setWpm(Math.round((newIndex / 5) / Math.max(elapsed, 0.001)))
+
     if (newIndex >= text.length) setFinished(true)
   }
 
-  const accuracy = currentIndex > 0 ? Math.round(((currentIndex - errors) / currentIndex) * 100) : 100
+  function reset() {
+    setCurrentIndex(0); setErrors(0); setWpm(0)
+    setStartedAt(null); setFinished(false)
+    setTextIdx(i => (i + 1) % TEXTS.length)
+  }
 
   return (
     <>
       <nav className="nav">
-        <div className="nav__inner">
-          <Link href="/lobby" className="nav__logo">⌨️ Type<span>Battle</span></Link>
-          <span className="badge badge--yellow">🎯 Training Mode</span>
+        <div className="nav-inner">
+          <Link href="/lobby" className="nav-logo">⌨️ Type<span>Wars</span></Link>
+          <span className="badge-lime">🎯 Training</span>
         </div>
       </nav>
 
-      <main style={{ maxWidth: '760px', margin: '0 auto', padding: '3rem 1.5rem' }}>
-        <div style={{ marginBottom: '1.5rem' }}>
-          <h1 style={{ fontSize: '1.4rem', marginBottom: '0.25rem' }}>Training Mode</h1>
-          <p style={{ fontSize: '0.875rem' }}>No pressure, no stats saved. Just practice.</p>
+      <main className="max-w-2xl mx-auto px-4 py-8">
+        <div className="mb-6">
+          <h1 className="font-display text-3xl font-bold text-snow mb-1">Training Mode</h1>
+          <p className="text-snow-muted text-sm">No pressure, no stats saved. Just practice. 🧘</p>
         </div>
 
-        <div className="flex gap-4" style={{ marginBottom: '2rem' }}>
-          <div className="stat-card" style={{ flex: 1 }}>
-            <div className="wpm-display">{wpm}<span className="wpm-display__unit"> wpm</span></div>
-            <div className="stat-card__label">Speed</div>
+        <div className="flex flex-col gap-5">
+          <div className="grid grid-cols-2 gap-3">
+            <div className="stat-card"><div className="stat-number">{wpm}</div><div className="stat-label">WPM</div></div>
+            <div className="stat-card"><div className="stat-number text-game-pink" style={{ fontSize: '1.5rem' }}>{errors}</div><div className="stat-label">Errors</div></div>
           </div>
-          <div className="stat-card" style={{ flex: 1 }}>
-            <div className="wpm-display" style={{ fontSize: '2rem' }}>{accuracy}<span className="wpm-display__unit">%</span></div>
-            <div className="stat-card__label">Accuracy</div>
-          </div>
-          <div className="stat-card" style={{ flex: 1 }}>
-            <div className="wpm-display" style={{ fontSize: '2rem', color: 'var(--accent-secondary)' }}>{errors}</div>
-            <div className="stat-card__label">Errors</div>
-          </div>
-        </div>
 
-        {!finished ? (
-          <div className="typing-area" onClick={() => inputRef.current?.focus()}>
-            {text.split('').map((ch, i) => {
-              let cls = 'typing-char'
-              if (i < currentIndex) cls += ' typing-char--correct'
-              else if (i === currentIndex) cls += ' typing-char--current'
-              return <span key={i} className={cls}>{ch}</span>
-            })}
-            <input ref={inputRef} onKeyDown={handleKeyDown} readOnly
-              style={{ position: 'absolute', opacity: 0, width: 1, height: 1 }} aria-label="Type here" />
-          </div>
-        ) : (
-          <div className="card animate-fade-in" style={{ textAlign: 'center', padding: '2.5rem' }}>
-            <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>✅</div>
-            <h2 style={{ marginBottom: '0.5rem' }}>Done!</h2>
-            <p style={{ marginBottom: '2rem' }}>{wpm} WPM · {accuracy}% accuracy · {errors} errors</p>
-            <div className="flex gap-3 justify-center">
-              <button className="btn btn--primary" onClick={() => window.location.reload()}>Practice Again</button>
-              <Link href="/solo" className="btn btn--secondary">Try Solo Race</Link>
+          {!finished ? (
+            <div className="typing-area" onClick={() => inputRef.current?.focus()}>
+              {text.split('').map((ch, i) => {
+                let cls = 'char'
+                if (i < currentIndex) cls = 'char-correct'
+                else if (i === currentIndex) cls = 'char-current'
+                return <span key={i} className={cls}>{ch}</span>
+              })}
+              <input
+                ref={inputRef}
+                style={{ position: 'absolute', opacity: 0, width: 1, height: 1 }}
+                onKeyDown={handleKeyDown}
+                readOnly tabIndex={0}
+              />
             </div>
-          </div>
-        )}
+          ) : (
+            <div className="card text-center py-8">
+              <div className="text-4xl mb-3">✅</div>
+              <h2 className="font-display text-2xl font-bold text-snow mb-1">Well done!</h2>
+              <p className="text-snow-muted text-sm mb-5">{wpm} WPM · {errors} errors</p>
+              <button className="btn-primary" onClick={reset}>Next Text 🔄</button>
+            </div>
+          )}
+
+          <p className="text-center text-snow-faint text-xs font-semibold">
+            {!startedAt ? '⌨️ Click the text area and start typing…' : finished ? '' : '🎯 Keep going!'}
+          </p>
+        </div>
       </main>
     </>
   )

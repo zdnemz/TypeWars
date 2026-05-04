@@ -9,11 +9,10 @@ function LoginForm() {
   const callbackUrl = searchParams.get('callbackUrl') ?? '/lobby'
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', width: '100%' }}>
+    <div className="flex flex-col gap-3 w-full">
       <button
         id="btn-google-signin"
-        className="btn btn--secondary btn--lg"
-        style={{ width: '100%', fontSize: '0.95rem', gap: '0.75rem' }}
+        className="btn-secondary btn-lg w-full justify-center gap-3 text-sm font-bold"
         onClick={() => signIn('google', { callbackUrl })}
       >
         <GoogleIcon />
@@ -21,8 +20,8 @@ function LoginForm() {
       </button>
       <button
         id="btn-github-signin"
-        className="btn btn--secondary btn--lg"
-        style={{ width: '100%', fontSize: '0.95rem', gap: '0.75rem', background: 'var(--bg-overlay)', borderColor: 'rgba(255,255,255,0.15)' }}
+        className="btn-secondary btn-lg w-full justify-center gap-3 text-sm font-bold"
+        style={{ background: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.1)' }}
         onClick={() => signIn('github', { callbackUrl })}
       >
         <GitHubIcon />
@@ -34,42 +33,40 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <main style={{
-      minHeight: '100vh',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '2rem',
-      background: 'var(--bg-base)',
-      position: 'relative',
-      overflow: 'hidden',
-    }}>
-      {/* Background glow */}
-      <div style={{
-        position: 'absolute', top: '40%', left: '50%',
-        transform: 'translate(-50%, -50%)',
-        width: '60vw', height: '60vh',
-        background: 'radial-gradient(ellipse, rgba(108,99,255,0.12) 0%, transparent 70%)',
-        pointerEvents: 'none',
-      }} />
+    <main className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden" style={{ background: '#09090F' }}>
+      {/* Glows */}
+      <div className="pointer-events-none absolute inset-0">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full opacity-15"
+          style={{ background: 'radial-gradient(ellipse, #FF6B35 0%, transparent 70%)' }} />
+        <div className="absolute bottom-1/4 right-1/4 w-[300px] h-[300px] rounded-full opacity-10"
+          style={{ background: 'radial-gradient(ellipse, #06D6FE 0%, transparent 70%)' }} />
+      </div>
 
-      <div className="card animate-fade-in" style={{ width: '100%', maxWidth: '400px', padding: '2.5rem', position: 'relative', textAlign: 'center' }}>
-        <Link href="/" style={{ display: 'block', marginBottom: '2rem', color: 'inherit', textDecoration: 'none' }}>
-          <div style={{ fontSize: '2.5rem', marginBottom: '0.25rem' }}>⌨️</div>
-          <div style={{ fontSize: '1.5rem', fontWeight: 800, letterSpacing: '-0.03em' }}>
-            Type<span style={{ color: 'var(--accent-primary)' }}>Battle</span>
+      {/* Floating emoji decorations */}
+      <div className="pointer-events-none absolute text-4xl opacity-20 top-[15%] left-[10%]" style={{ animation: 'float 3s ease-in-out infinite' }}>⌨️</div>
+      <div className="pointer-events-none absolute text-3xl opacity-15 top-[25%] right-[12%]" style={{ animation: 'float 4s ease-in-out infinite 1s' }}>🏆</div>
+      <div className="pointer-events-none absolute text-3xl opacity-15 bottom-[20%] left-[15%]" style={{ animation: 'float 3.5s ease-in-out infinite 0.5s' }}>⚡</div>
+      <div className="pointer-events-none absolute text-2xl opacity-10 bottom-[30%] right-[10%]" style={{ animation: 'float 5s ease-in-out infinite 2s' }}>🎯</div>
+
+      <div className="card relative w-full max-w-sm p-8 text-center" style={{ background: 'rgba(18,18,28,0.9)' }}>
+        <Link href="/" className="block mb-8">
+          <div className="text-5xl mb-2">⌨️</div>
+          <div className="font-display text-2xl font-bold text-snow">
+            Type<span className="text-orange">Wars</span>
           </div>
         </Link>
 
-        <h1 style={{ fontSize: '1.4rem', marginBottom: '0.5rem' }}>Welcome back</h1>
-        <p style={{ marginBottom: '2rem', fontSize: '0.9rem' }}>Sign in to track your progress and race others.</p>
+        <h1 className="font-display text-xl font-semibold text-snow mb-1">Welcome back, typist!</h1>
+        <p className="text-snow-muted text-sm mb-8">Sign in to track your progress and race others.</p>
 
-        <Suspense fallback={<div style={{ color: 'var(--text-muted)' }}>Loading...</div>}>
+        <Suspense fallback={
+          <div className="text-snow-muted text-sm py-4">Loading...</div>
+        }>
           <LoginForm />
         </Suspense>
 
-        <p style={{ marginTop: '1.75rem', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-          By signing in you agree to our terms. No password needed — OAuth only.
+        <p className="mt-6 text-xs text-snow-faint">
+          By signing in you agree to our terms. OAuth only — no password needed.
         </p>
       </div>
     </main>

@@ -11,8 +11,7 @@ export default function LobbyPage() {
   const [error, setError] = useState('')
 
   async function handleCreate() {
-    setCreating(true)
-    setError('')
+    setCreating(true); setError('')
     try {
       const res = await fetch('/api/rooms', { method: 'POST' })
       if (!res.ok) throw new Error('Failed to create room')
@@ -28,88 +27,93 @@ export default function LobbyPage() {
     e.preventDefault()
     const code = joinCode.trim().toUpperCase()
     if (code.length !== 6) { setError('Room code must be 6 characters'); return }
-    setJoining(true)
-    setError('')
+    setJoining(true); setError('')
     router.push(`/room/${code}`)
   }
 
   return (
     <>
       <nav className="nav">
-        <div className="nav__inner">
-          <Link href="/" className="nav__logo">⌨️ Type<span>Battle</span></Link>
-          <div className="nav__links">
-            <Link href="/leaderboard" className="nav__link">Leaderboard</Link>
-            <Link href="/profile/me" className="nav__link">Profile</Link>
+        <div className="nav-inner">
+          <Link href="/" className="nav-logo">⌨️ Type<span>Wars</span></Link>
+          <div className="flex items-center gap-3">
+            <Link href="/leaderboard" className="text-snow-muted hover:text-snow text-sm font-semibold transition-colors hidden sm:block">Leaderboard</Link>
+            <Link href="/profile/me" className="text-snow-muted hover:text-snow text-sm font-semibold transition-colors">Profile</Link>
           </div>
         </div>
       </nav>
 
-      <main style={{ minHeight: '80vh', display: 'flex', alignItems: 'center', padding: '3rem 1.5rem' }}>
-        <div className="container" style={{ maxWidth: '800px' }}>
-          <div style={{ marginBottom: '2.5rem' }}>
-            <h1 style={{ marginBottom: '0.5rem' }}>Game Lobby</h1>
-            <p>Create a private room, join a friend, or play solo.</p>
+      <main className="min-h-[85vh] flex items-start py-10 px-4">
+        <div className="w-full max-w-2xl mx-auto">
+          {/* Header */}
+          <div className="mb-8">
+            <h1 className="font-display text-4xl font-bold text-snow mb-1">Game Lobby</h1>
+            <p className="text-snow-muted">Create a room, join a friend, or go solo.</p>
           </div>
 
           {error && (
-            <div className="badge badge--red" style={{ marginBottom: '1.5rem', padding: '0.75rem 1rem', borderRadius: 'var(--radius-md)', width: '100%' }}>
+            <div className="badge-pink flex items-center gap-2 mb-5 px-4 py-3 rounded-xl w-full text-sm">
               ⚠️ {error}
             </div>
           )}
 
-          <div className="grid-2" style={{ marginBottom: '1.5rem' }}>
-            {/* Create Room */}
-            <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          {/* Multiplayer cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+            {/* Create */}
+            <div className="card flex flex-col gap-4 border border-orange/20 hover:border-orange/50 transition-colors">
               <div>
-                <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>🚀</div>
-                <h2 style={{ fontSize: '1.2rem', marginBottom: '0.25rem' }}>Create Room</h2>
-                <p style={{ fontSize: '0.875rem' }}>Start a new private room. Share the code with up to 3 friends.</p>
+                <div className="text-4xl mb-3">🚀</div>
+                <h2 className="font-display text-xl font-semibold text-snow mb-1">Create Room</h2>
+                <p className="text-snow-muted text-sm leading-relaxed">Start a new room. You'll be the leader — invite up to 5 friends.</p>
               </div>
               <button
                 id="btn-create-room"
-                className="btn btn--primary"
+                className="btn-primary w-full justify-center"
                 onClick={handleCreate}
                 disabled={creating}
               >
-                {creating ? 'Creating…' : 'Create Room'}
+                {creating ? (
+                  <span className="flex items-center gap-2">
+                    <span className="inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    Creating…
+                  </span>
+                ) : '🚀 Create Room'}
               </button>
             </div>
 
-            {/* Join Room */}
-            <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            {/* Join */}
+            <div className="card flex flex-col gap-4 border border-game-cyan/20 hover:border-game-cyan/50 transition-colors">
               <div>
-                <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>🔗</div>
-                <h2 style={{ fontSize: '1.2rem', marginBottom: '0.25rem' }}>Join Room</h2>
-                <p style={{ fontSize: '0.875rem' }}>Enter a 6-character room code to join a friend's game.</p>
+                <div className="text-4xl mb-3">🔗</div>
+                <h2 className="font-display text-xl font-semibold text-snow mb-1">Join Room</h2>
+                <p className="text-snow-muted text-sm leading-relaxed">Enter a 6-character room code to join a friend's game.</p>
               </div>
-              <form onSubmit={handleJoin} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              <form onSubmit={handleJoin} className="flex flex-col gap-3">
                 <input
                   id="input-room-code"
-                  className="input"
-                  placeholder="Enter room code…"
+                  className="input font-mono text-lg tracking-[0.2em] uppercase text-center"
+                  placeholder="ABCDEF"
                   value={joinCode}
                   onChange={e => setJoinCode(e.target.value.toUpperCase().slice(0, 6))}
                   maxLength={6}
-                  style={{ fontFamily: 'var(--font-mono)', letterSpacing: '0.15em', textTransform: 'uppercase', fontSize: '1.1rem' }}
                 />
                 <button
                   id="btn-join-room"
-                  className="btn btn--secondary"
+                  className="btn-cyan w-full justify-center"
                   type="submit"
                   disabled={joining || joinCode.length !== 6}
                 >
-                  {joining ? 'Joining…' : 'Join Room'}
+                  {joining ? 'Joining…' : '🔗 Join Room'}
                 </button>
               </form>
             </div>
           </div>
 
           {/* Solo modes */}
-          <div className="grid-3">
-            <ModeCard id="btn-solo" href="/solo" icon="⚡" title="Solo Race" desc="Race against the clock. Stats saved." />
-            <ModeCard id="btn-training" href="/training" icon="🎯" title="Training" desc="Free practice. No pressure." />
-            <ModeCard id="btn-arcade" href="/arcade" icon="🎮" title="Arcade" desc="Type words fast for 60 seconds." />
+          <div className="grid grid-cols-3 gap-3">
+            <ModeCard id="btn-solo" href="/solo" icon="⚡" title="Solo Race" desc="Race the clock" color="border-game-yellow/20 hover:border-game-yellow/50" />
+            <ModeCard id="btn-training" href="/training" icon="🎯" title="Training" desc="No pressure" color="border-game-lime/20 hover:border-game-lime/50" />
+            <ModeCard id="btn-arcade" href="/arcade" icon="🎮" title="Arcade" desc="60-second sprint" color="border-game-violet/20 hover:border-game-violet/50" />
           </div>
         </div>
       </main>
@@ -117,16 +121,15 @@ export default function LobbyPage() {
   )
 }
 
-function ModeCard({ id, href, icon, title, desc }: { id: string; href: string; icon: string; title: string; desc: string }) {
+function ModeCard({ id, href, icon, title, desc, color }: {
+  id: string; href: string; icon: string; title: string; desc: string; color: string
+}) {
   return (
-    <Link href={href} id={id} style={{ textDecoration: 'none' }}>
-      <div className="card" style={{ cursor: 'pointer', transition: 'all 0.2s', textAlign: 'center' }}
-        onMouseEnter={e => (e.currentTarget.style.borderColor = 'var(--accent-primary)')}
-        onMouseLeave={e => (e.currentTarget.style.borderColor = '')}
-      >
-        <div style={{ fontSize: '1.75rem', marginBottom: '0.5rem' }}>{icon}</div>
-        <h3 style={{ fontSize: '0.95rem', marginBottom: '0.25rem' }}>{title}</h3>
-        <p style={{ fontSize: '0.8rem' }}>{desc}</p>
+    <Link href={href} id={id} className="block">
+      <div className={`card cursor-pointer text-center border ${color} transition-colors`}>
+        <div className="text-3xl mb-2">{icon}</div>
+        <h3 className="font-display text-sm font-semibold text-snow mb-0.5">{title}</h3>
+        <p className="text-snow-faint text-xs">{desc}</p>
       </div>
     </Link>
   )
